@@ -1,0 +1,7 @@
+pyvisa
+pyvisa-py
+PyUSB
+flask
+flask_restful
+flask-jsonpify
+jsonify
