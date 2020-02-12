@@ -13,28 +13,90 @@ app = Flask(__name__)
 
 device = DP832()
 
+json_header = {'Content-Type': 'application/json'}
+
 def response(q):
     return jsonify(q.to_dict())
 
 @app.route("/")
 def index():
-    return jsonify(user="lala")
+    return jsonify(device.idn()), 200, json_header
 
-@app.route("/idn")
-def idn():
-    return response(device.idn())
+@app.route("/<channel_name>")
+def state(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    return jsonify(response=channel.state), 200, json_header
 
-@app.route("/power")
-def power():
-    return response(device.power(request.args.get("channel")))
+@app.route("/<channel_name>/on")
+def on(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    channel.state = "ON"
+    return jsonify(response=channel.state), 200, json_header
 
-@app.route("/on")
-def on():
-    return response(device.on(request.args.get("channel")))
+@app.route("/<channel_name>/off")
+def off(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    channel.state = "OFF"
+    return jsonify(response=channel.state), 200, json_header
 
-@app.route("/off")
-def off():
-    return response(device.off(request.args.get("channel")))
+@app.route("/<channel_name>/voltage")
+def voltage(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    value = request.args.get("set")
+    if value:
+        channel.voltage = value
+    return jsonify(response=channel.voltage), 200, json_header
+
+@app.route("/<channel_name>/current_limit")
+def current_limit(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    value = request.args.get("set")
+    if value:
+        channel.current_limit = value
+    return jsonify(response=channel.current_limit), 200, json_header
+
+
+@app.route("/<channel_name>/current")
+def current(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    value = request.args.get("set")
+    if value:
+        channel.current = value
+    return jsonify(response=channel.current), 200, json_header
+
+@app.route("/<channel_name>/u")
+def u(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    return jsonify(response=channel.u), 200, json_header
+
+@app.route("/<channel_name>/i")
+def i(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    return jsonify(response=channel.i), 200, json_header
+
+@app.route("/<channel_name>/p")
+def p(channel_name):
+    channel = device[channel_name]
+    if not channel:
+        return jsonify(error="No such channel: " + channel_name), 404, json_header
+    return jsonify(response=channel.p), 200, json_header
+
 
 @app.route("/select")
 def select():
