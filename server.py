@@ -102,10 +102,6 @@ def p(channel_name):
 def select():
     return response(device.select(request.args.get("channel")))
 
-@app.route("/apply")
-def apply():
-    return response(device.apply(request.args.get("channel"), request.args.get("u"), request.args.get("i")))
-
 if __name__ == "__main__":
     device.start()
     app.run(debug=False)
