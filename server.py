@@ -1,13 +1,6 @@
-from flask import Flask, request
-from flask_restful import Resource, Api
-from json import dumps
-from flask import jsonify, request
+from flask import Flask, request, jsonify
+from rigol import DP832, ArgumentError, InitError
 
-from rigol import DP832, ArgumentError, InitError, Query
-
-import time
-import sys
-import visa
 
 app = Flask(__name__)
 
