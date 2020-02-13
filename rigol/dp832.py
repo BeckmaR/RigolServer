@@ -167,22 +167,27 @@ class CommandFormatter():
 
 class DP832():
     class Resource():
-        def __init__(self):
+        def __init__(self, print_commands = False):
+            self.print_commands = print_commands
             self.instr = None
 
         def write(self, w):
-            print(w)
+            self.print(w)
             self.instr.write(w)
 
         def query(self, q):
-            print(q)
+            self.print(q)
             r = self.instr.query(q).strip()
-            print(r)
+            self.print(r)
             return r
 
         def close(self):
             if self.instr:
                 self.instr.close()
+
+        def print(self, s):
+            if self.print_commands:
+                print(s)
 
     class Channel():
         def __init__(self, name, resource, command_formatter):
@@ -249,9 +254,9 @@ class DP832():
             cmd = self.command_formatter.query_measured_power(self.name)
             return self.instr.query(cmd)
 
-    def __init__(self):
+    def __init__(self, print_commands=False):
         self._rm = visa.ResourceManager('@py')
-        self._resource = DP832.Resource()
+        self._resource = DP832.Resource(print_commands)
         self._channel_names = ["CH1", "CH2", "CH3"]
         self._formatter = CommandFormatter(self._channel_names)
         self._channels = {name : DP832.Channel(name, self._resource, self._formatter) for name in self._channel_names}
@@ -270,7 +275,7 @@ class DP832():
         res = self._rm.list_resources()
         if not res:
             raise InitError("No instruments found")
-        instr = self._rm.open_resource(res[0], read_termination='\n')
+        instr = self._rm.open_resource(res[0])
         self._resource.instr = instr
         instr.clear()
 
