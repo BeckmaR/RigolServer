@@ -154,6 +154,16 @@ class CommandFormatter():
             command = ":MEAS:POWE? " + channel
         return command
 
+    def query_active_channel(self):
+        return ":INST:SELE?"
+
+    def active_channel(self, channel):
+        if channel is None:
+            raise ArgumentMissingError("channel")
+        channel = self.format_channel_str(channel)
+        command = ":INST:SELE " + channel
+        return command
+
 
 class DP832():
     class Resource():
@@ -169,6 +179,10 @@ class DP832():
             r = self.instr.query(q).strip()
             print(r)
             return r
+
+        def close(self):
+            if self.instr:
+                self.instr.close()
 
     class Channel():
         def __init__(self, name, resource, command_formatter):
@@ -236,29 +250,51 @@ class DP832():
             return self.instr.query(cmd)
 
     def __init__(self):
-        self.rm = visa.ResourceManager('@py')
-        self.instr = None
-        self.resource = DP832.Resource()
+        self._rm = visa.ResourceManager('@py')
+        self._resource = DP832.Resource()
         self._channel_names = ["CH1", "CH2", "CH3"]
-        self.formatter = CommandFormatter(self._channel_names)
-        self._channels = {name : DP832.Channel(name, self.resource, self.formatter) for name in self._channel_names}
+        self._formatter = CommandFormatter(self._channel_names)
+        self._channels = {name : DP832.Channel(name, self._resource, self._formatter) for name in self._channel_names}
+
+    def __del__(self):
+        self._resource.close()
 
     def __getitem__(self, item):
         try:
-            item = self.formatter.format_channel_str(item)
+            item = self._formatter.format_channel_str(item)
             return self._channels[item]
         except:
             return None
 
-
     def start(self):
-        res = self.rm.list_resources()
+        res = self._rm.list_resources()
         if not res:
             raise InitError("No instruments found")
-        print(res)
-        self.instr = self.rm.open_resource(res[0], read_termination='\n')
-        self.resource.instr = self.instr
-        self.instr.clear()
+        instr = self._rm.open_resource(res[0], read_termination='\n')
+        self._resource.instr = instr
+        instr.clear()
 
     def idn(self):
-        return self.resource.query('*IDN?')
+        return self._resource.query('*IDN?')
+
+    @property
+    def active_channel(self):
+        cmd = self._formatter.query_active_channel()
+        resp = self._resource.query(cmd)
+        for ch in self._channel_names:
+            if ch in resp:
+                return self[ch]
+        return None
+
+    @active_channel.setter
+    def active_channel(self, channel):
+        if channel is None:
+            return
+        if isinstance(channel, DP832.Channel):
+            channel = channel.name
+        else:
+            channel = self._formatter.format_channel_str(channel)
+        cmd = self._formatter.active_channel(channel)
+        self._resource.write(cmd)
+
+
