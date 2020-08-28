@@ -275,6 +275,9 @@ class DP832():
         res = self._rm.list_resources()
         if not res:
             raise InitError("No instruments found")
+        res = list(filter(lambda name: "DP8" in name, res))
+        if not res:
+            raise InitError("No instruments found")
         instr = self._rm.open_resource(res[0])
         self._resource.instr = instr
         instr.clear()
