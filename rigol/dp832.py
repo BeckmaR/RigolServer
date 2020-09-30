@@ -1,4 +1,4 @@
-import visa
+import pyvisa as visa
 
 class InitError(Exception):
     pass
@@ -304,5 +304,3 @@ class DP832():
             channel = self._formatter.format_channel_str(channel)
         cmd = self._formatter.active_channel(channel)
         self._resource.write(cmd)
-
-
